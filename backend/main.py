@@ -1,4 +1,5 @@
 # main.py
+import certifi
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
@@ -13,6 +14,10 @@ from fastapi.staticfiles import StaticFiles
 
 # Load environment variables from .env file
 load_dotenv()
+
+
+print(certifi.where())
+
 
 # Get secret key from environment
 SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret")
@@ -43,8 +48,6 @@ app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 @app.on_event("startup")
 async def startup_event():
     app_logger.info("Starting session-based cleanup background task")
-    # Start cleanup with 5-minute intervals and 15-minute session expiry
-    # asyncio.create_task(cleanup_expired_sessions(interval_seconds=300, expiry_minutes=15))
 
 # Register routers
 app.include_router(api_router, prefix="/api")     # Main API

@@ -12,11 +12,6 @@ done
 
 echo "MongoDB is ready!"
 
-# Create uploads directory BEFORE starting FastAPI
-echo "Creating uploads directory..."
-mkdir -p /app/uploads
-echo "Uploads directory created at: $(ls -la /app/uploads)"
-
 # Run user creation script
 echo "Creating initial user..."
 python /app/server/create_user.py

@@ -4,7 +4,7 @@ import os
 
 class GCSService:
     # Set once at module level (can load from env if needed)
-    KEY_PATH = "C:\\Users\\hyper_x_fury\\OneDrive\\Desktop\\learn_machine_learning\\learn_machine_learning\\learn_machine_learning\\key.json"
+    KEY_PATH = "/key.json"
     BUCKET_NAME = "dugongstorage"
 
     @staticmethod

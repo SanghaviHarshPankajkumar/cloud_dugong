@@ -244,7 +244,7 @@ def cleanup_sessions(user_email: str, session_id: str = Query(None)):
     """
     # Load environment and connect to MongoDB
     load_dotenv()
-    MONGO_URL = os.getenv("MONGO_URL")
+    MONGO_URL = os.getenv("MONGO_URI")
     client = MongoClient(MONGO_URL)
     db = client["DugongMonitoring"]
     user_collection = db["users"]

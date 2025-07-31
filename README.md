@@ -36,7 +36,6 @@ backend/
 ├── schemas/        # Data validation schemas
 ├── images/         # Processed images storage
 ├── logs/          # Application logs
-└── uploads/        # Temporary upload directory
 
 frontend/
 ├── public/         # Static assets

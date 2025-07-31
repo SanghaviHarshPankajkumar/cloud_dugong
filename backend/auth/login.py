@@ -16,7 +16,7 @@ app = FastAPI()
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 # Config
-MONGO_URL = os.getenv("MONGO_URI", "mongodb://localhost:27017/DugongMonitoring")  # Changed from MONGO_URL to MONGO_URI
+MONGO_URL = os.getenv("MONGO_URI")  # Changed from MONGO_URL to MONGO_URI
 SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60

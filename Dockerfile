@@ -1,46 +1,60 @@
-# Stage 1: Build the frontend
-FROM node:20-alpine AS frontend-builder
+# Stage 1: Build frontend
+FROM node:22-alpine AS frontend-builder
 
-WORKDIR /app/frontend
+WORKDIR /app
+COPY frontend/ /app/
+RUN npm install && npm run build
 
-# Install frontend dependencies
-COPY frontend/package*.json ./
-RUN npm install
+# Stage 2: Backend + Frontend + MongoDB + Nginx
+FROM python:3.11
 
-# Build the frontend
-COPY frontend/ .
-RUN npm run build
-
-# Stage 2: Build the backend and serve frontend
-FROM python:3.11-slim AS backend
-
-# Install system dependencies required by OpenCV and others
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
-    libgl1 \
+    git \
     libglib2.0-0 \
+    libsm6 \
+    libxrender1 \
+    libxext6 \
+    ffmpeg \
+    nginx \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
+# Set environment (base)
+ENV PYTHONUNBUFFERED=1 \
+    HOST=0.0.0.0
+
+# Add your application environment variables
+ENV MONGODB_URI=mongodb+srv://harsh:harsh@practice.acsbh.mongodb.net/?retryWrites=true&w=majority&appName=practice/DugongMonitoring \
+    VITE_API_URL=https://service-name-821207759670.europe-west1.run.app \
+    KEY_PATH=/dugongmonitoring.json \
+    BUCKET_NAME=dugongstorage \
+    GOOGLE_APPLICATION_CREDENTIALS=/app/dugongmonitoring.json
+
 WORKDIR /app
 
-# Install Python dependencies
-COPY backend/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy backend code
+COPY backend/ /app/backend/
+COPY model/ /app/model/
+COPY dugongmonitoring.json /app/dugongmonitoring.json
 
-# Copy backend source code
-COPY backend/ .
+# Install backend requirements
+RUN pip install --upgrade pip
+RUN pip install -r /app/backend/requirements.txt
 
 # Copy built frontend
-COPY --from=frontend-builder /app/frontend/dist ./static
+COPY --from=frontend-builder /app/dist /app/frontend/
 
-# (Optional) Copy GCP key
-COPY key.json /key.json
+# Configure Nginx
+RUN rm -f /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Set environment variables
-ENV GOOGLE_APPLICATION_CREDENTIALS=/key.json
-ENV PORT=8080
+# Copy startup script
+COPY startup.sh /app/startup.sh
+RUN chmod +x /app/startup.sh
 
+# Expose port for Cloud Run
 EXPOSE 8080
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Start everything via script
+CMD ["/app/startup.sh"]

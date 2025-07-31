@@ -1,13 +1,16 @@
 # One-time user creation script
+from dotenv import load_dotenv
 from passlib.context import CryptContext
 from pymongo import MongoClient
 import sys
-
+import os
+load_dotenv()
+MONGO_URL = os.getenv("MONGO_URI")  
 try:
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
     hashed = pwd_context.hash("secret123")
 
-    client = MongoClient("mongodb://mongo:27017")
+    client = MongoClient(MONGO_URL)
     db = client["DugongMonitoring"]
     users = db["users"]
     
