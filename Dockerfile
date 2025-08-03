@@ -1,8 +1,15 @@
+
 # Stage 1: Build frontend
 FROM node:22-alpine AS frontend-builder
 
+# Allow API URL to be overridden at build time
+ARG VITE_API_URL="/api"
+
 WORKDIR /app
 COPY frontend/ /app/
+
+ENV VITE_API_URL=${VITE_API_URL}
+
 RUN npm install && npm run build
 
 # Stage 2: Backend + Frontend + MongoDB + Nginx
@@ -20,16 +27,18 @@ RUN apt-get update && apt-get install -y \
     nginx \
     ca-certificates \
     openssl \
+    gettext-base \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Set environment (base)
 ENV PYTHONUNBUFFERED=1 \
-    HOST=0.0.0.0
+    HOST=0.0.0.0 \
+    PORT=8080
 
 # Application environment variables
 # Make sure to override MONGODB_URI with secrets in production
 ENV MONGODB_URI="mongodb+srv://harsh:harsh@practice.acsbh.mongodb.net/?retryWrites=true&w=majority&appName=practice" \
-    VITE_API_URL="http://localhost:8000/api" \
     BUCKET_NAME="dugongstorage"
 
 WORKDIR /app
@@ -54,8 +63,17 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY startup.sh /app/startup.sh
 RUN chmod +x /app/startup.sh
 
+# Create nginx user and set permissions
+RUN mkdir -p /var/log/nginx /var/cache/nginx && \
+    chown -R www-data:www-data /var/log/nginx /var/cache/nginx && \
+    chmod -R 755 /var/log/nginx /var/cache/nginx
+
 # Expose port for Cloud Run
 EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:${PORT}/health || exit 1
 
 # Start everything via script
 CMD ["/app/startup.sh"]
