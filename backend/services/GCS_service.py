@@ -1,17 +1,38 @@
+import os
+import base64
 from google.cloud import storage
 from datetime import timedelta
-import os
 
 class GCSService:
-    # Set once at module level (can load from env if needed)
-    KEY_PATH = "/key.json"
-    BUCKET_NAME = "dugongstorage"
+    BUCKET_NAME = os.getenv("BUCKET_NAME", "dugongstorage")
+    KEY_PATH = "/app/key.json"
+    KEY_B64_PATH = "/app/key.json.b64"
+
+    @staticmethod
+    def ensure_key_file():
+        # If already decoded, return it
+        if os.path.exists(GCSService.KEY_PATH):
+            return GCSService.KEY_PATH
+
+        # Decode the base64 file
+        if not os.path.exists(GCSService.KEY_B64_PATH):
+            raise FileNotFoundError(f"Missing encoded key file: {GCSService.KEY_B64_PATH}")
+
+        try:
+            with open(GCSService.KEY_B64_PATH, "r") as f:
+                creds_b64 = f.read().strip()
+            creds_json = base64.b64decode(creds_b64).decode("utf-8")
+            with open(GCSService.KEY_PATH, "w") as f:
+                f.write(creds_json)
+        except Exception as e:
+            raise ValueError(f"Failed to decode service account key: {e}")
+
+        return GCSService.KEY_PATH
 
     @staticmethod
     def get_client():
-        if not os.path.exists(GCSService.KEY_PATH):
-            raise FileNotFoundError(f"Service account key not found: {GCSService.KEY_PATH}")
-        return storage.Client.from_service_account_json(GCSService.KEY_PATH)
+        key_path = GCSService.ensure_key_file()
+        return storage.Client.from_service_account_json(key_path)
 
     @staticmethod
     def get_bucket():
@@ -20,9 +41,6 @@ class GCSService:
 
     @staticmethod
     def upload_file(local_path: str, folder_prefix: str, file_name: str, url_expiration_hours: int = 1) -> str:
-        """
-        Upload a file to GCS with folder prefix and return signed URL.
-        """
         if not os.path.exists(local_path):
             raise FileNotFoundError(f"Local file not found: {local_path}")
 
@@ -43,27 +61,16 @@ class GCSService:
 
     @staticmethod
     def download_file(folder_prefix: str, file_name: str, destination_path: str):
-        """
-        Download a file from GCS using folder prefix + filename.
-        """
         bucket = GCSService.get_bucket()
         blob_path = f"{folder_prefix.rstrip('/')}/{file_name}"
         blob = bucket.blob(blob_path)
         blob.download_to_filename(destination_path)
         print(f"Downloaded {blob_path} to {destination_path}")
 
-
     @staticmethod
     def move_image_to_false_positive(session_id: str, image_name: str, target_class: str):
-        """
-        Move image from 'session_id/images/' to 'False positives/<target_class>/' in GCS.
-        """
         bucket = GCSService.get_bucket()
-
-        # Source: session_id/images/image.jpg
         source_path = f"{session_id}/images/{image_name}"
-
-        # Destination: False positives/Class A/image.jpg
         destination_path = f"False positives/{target_class}/{image_name}"
 
         source_blob = bucket.blob(source_path)
@@ -71,17 +78,11 @@ class GCSService:
         if not source_blob.exists():
             raise FileNotFoundError(f"Image not found in GCS: {source_path}")
 
-        # Copy the image to the destination path
         bucket.copy_blob(source_blob, bucket, destination_path)
-
-        # Delete the original image
         source_blob.delete()
 
     @staticmethod
     def delete_session_folder(session_id: str) -> dict:
-        """
-        Delete all files in a GCS folder matching the given session_id.
-        """
         bucket = GCSService.get_bucket()
         prefix = f"{session_id}/"
         blobs = list(bucket.list_blobs(prefix=prefix))
@@ -93,4 +94,8 @@ class GCSService:
             print(f"Deleting blob: {blob.name}")
             blob.delete()
 
-        return {"deleted": True, "message": f"All files deleted for session_id: {session_id}", "file_count": len(blobs)}
+        return {
+            "deleted": True,
+            "message": f"All files deleted for session_id: {session_id}",
+            "file_count": len(blobs)
+        }

@@ -8,7 +8,7 @@ RUN npm install && npm run build
 # Stage 2: Backend + Frontend + MongoDB + Nginx
 FROM python:3.11
 
-# Install system dependencies
+# Install system dependencies including CA certificates & OpenSSL
 RUN apt-get update && apt-get install -y \
     build-essential \
     git \
@@ -18,28 +18,29 @@ RUN apt-get update && apt-get install -y \
     libxext6 \
     ffmpeg \
     nginx \
+    ca-certificates \
+    openssl \
     && rm -rf /var/lib/apt/lists/*
 
 # Set environment (base)
 ENV PYTHONUNBUFFERED=1 \
     HOST=0.0.0.0
 
-# Add your application environment variables
-ENV MONGODB_URI=mongodb+srv://harsh:harsh@practice.acsbh.mongodb.net/?retryWrites=true&w=majority&appName=practice/DugongMonitoring \
-    VITE_API_URL=https://service-name-821207759670.europe-west1.run.app \
-    KEY_PATH=/dugongmonitoring.json \
-    BUCKET_NAME=dugongstorage \
-    GOOGLE_APPLICATION_CREDENTIALS=/app/dugongmonitoring.json
+# Application environment variables
+# Make sure to override MONGODB_URI with secrets in production
+ENV MONGODB_URI="mongodb+srv://harsh:harsh@practice.acsbh.mongodb.net/?retryWrites=true&w=majority&appName=practice" \
+    VITE_API_URL="http://localhost:8000/api" \
+    BUCKET_NAME="dugongstorage"
 
 WORKDIR /app
 
 # Copy backend code
 COPY backend/ /app/backend/
 COPY model/ /app/model/
-COPY dugongmonitoring.json /app/dugongmonitoring.json
+COPY key.json.b64 /app/key.json.b64
 
 # Install backend requirements
-RUN pip install --upgrade pip
+RUN pip install --upgrade pip certifi
 RUN pip install -r /app/backend/requirements.txt
 
 # Copy built frontend

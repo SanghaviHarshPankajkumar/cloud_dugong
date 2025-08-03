@@ -3,10 +3,6 @@ set -e  # Exit on any error
 
 echo "=== Starting Dugong Classification Monolith ==="
 
-# # 4. Create initial user
-# echo "Running initial user creation script..."
-# python3 /app/backend/create_user.py
-
 # 5. Start FastAPI backend in background
 echo "Starting FastAPI backend..."
 cd /app/backend
