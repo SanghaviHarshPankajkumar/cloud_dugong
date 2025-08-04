@@ -52,7 +52,7 @@ async def startup_event():
 # Register routers
 app.include_router(api_router, prefix="/api")     # Main API
 # app.include_router(auth_router)                   # Google OAuth
-app.include_router(login_router)                  # Email/Password Login
+app.include_router(login_router, prefix="/api")                  # Email/Password Login
 
 @app.get("/")
 async def root():

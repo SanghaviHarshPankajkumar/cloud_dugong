@@ -12,7 +12,7 @@ import uuid
 load_dotenv()
 
 # FastAPI app and router
-app = FastAPI()
+app = FastAPI()     
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 # Config

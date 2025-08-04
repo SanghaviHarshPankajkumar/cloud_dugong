@@ -19,7 +19,7 @@ const DashboardHeader = ({ onImageUpload }: DashboardHeaderProps) => {
     //   return;
     // }
     // try {
-    //   const res = await fetch(`${API_URL}/api/session-status/${sessionId}`);
+    //   const res = await fetch(`${API_URL}/session-status/${sessionId}`);
     //   const data = await res.json();
     //   if (!data.success) throw new Error("Failed to fetch session metadata");
     //   // Assume data.files is an array of objects to export
@@ -42,7 +42,7 @@ const DashboardHeader = ({ onImageUpload }: DashboardHeaderProps) => {
     }
     try {
       const response = await fetch(
-        `${API_URL}/api/export-session-csv/${sessionId}`
+        `${API_URL}/export-session-csv/${sessionId}`
       );
       if (!response.ok) throw new Error("Failed to export CSV");
       const blob = await response.blob();
