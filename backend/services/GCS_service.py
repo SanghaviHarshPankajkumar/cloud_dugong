@@ -1,38 +1,16 @@
 import os
-import base64
 from google.cloud import storage
 from datetime import timedelta
 
 class GCSService:
     BUCKET_NAME = os.getenv("BUCKET_NAME", "dugongstorage")
-    KEY_PATH = "/app/key.json"
-    KEY_B64_PATH = "/app/key.json.b64"
-
-    @staticmethod
-    def ensure_key_file():
-        # If already decoded, return it
-        if os.path.exists(GCSService.KEY_PATH):
-            return GCSService.KEY_PATH
-
-        # Decode the base64 file
-        if not os.path.exists(GCSService.KEY_B64_PATH):
-            raise FileNotFoundError(f"Missing encoded key file: {GCSService.KEY_B64_PATH}")
-
-        try:
-            with open(GCSService.KEY_B64_PATH, "r") as f:
-                creds_b64 = f.read().strip()
-            creds_json = base64.b64decode(creds_b64).decode("utf-8")
-            with open(GCSService.KEY_PATH, "w") as f:
-                f.write(creds_json)
-        except Exception as e:
-            raise ValueError(f"Failed to decode service account key: {e}")
-
-        return GCSService.KEY_PATH
+    KEY_PATH = os.path.join(os.path.dirname(__file__), "key.json")
 
     @staticmethod
     def get_client():
-        key_path = GCSService.ensure_key_file()
-        return storage.Client.from_service_account_json(key_path)
+        if not os.path.exists(GCSService.KEY_PATH):
+            raise FileNotFoundError(f"GCS key file not found at {GCSService.KEY_PATH}")
+        return storage.Client.from_service_account_json(GCSService.KEY_PATH)
 
     @staticmethod
     def get_bucket():
