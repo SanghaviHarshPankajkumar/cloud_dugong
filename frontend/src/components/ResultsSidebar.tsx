@@ -76,7 +76,7 @@ const ResultsSidebar = ({
       const imageName = currentImageData.imageUrl.split("/").pop();
 
       try {
-        const response = await fetch(`${API_URL}/api/move-to-false-positive/`, {
+        const response = await fetch(`${API_URL}/move-to-false-positive/`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

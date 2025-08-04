@@ -20,7 +20,7 @@ logger = setup_logger("api", "logs/api.log")
 router = APIRouter()
 
 @router.post("/upload-multiple/", response_model=dict)
-async def upload_multiple(
+async def upload_multiple(  
     files: List[UploadFile] = File(...),
     session_id: str = Form(...)
 ):

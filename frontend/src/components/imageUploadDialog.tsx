@@ -109,7 +109,7 @@ const ImageUploadDialog = ({
       });
       formData.append("session_id", sessionId);
       // Make API call to your FastAPI endpoint
-      const response = await fetch(`${API_URL}/api/upload-multiple/`, {
+      const response = await fetch(`${API_URL}/upload-multiple/`, {
         method: "POST",
         body: formData,
       });
@@ -136,10 +136,10 @@ const ImageUploadDialog = ({
   };
 
   return (
-    <Dialog  open={isOpen}  onOpenChange={(open) => {
-          if (!isUploading) setIsOpen(open);
-        }}
-      >
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!isUploading) setIsOpen(open);
+    }}
+    >
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white/95 backdrop-blur-sm border-0 shadow-2xl">
         <DialogHeader>

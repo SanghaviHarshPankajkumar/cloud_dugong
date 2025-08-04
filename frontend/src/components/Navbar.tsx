@@ -53,7 +53,7 @@ const Navbar: React.FC<NavbarProps> = ({ imageCount = 0 }) => {
       // Call backend cleanup endpoint before logging out
       if (userEmail && sessionId) {
         await axios.post(
-          `${API_URL}/api/cleanup-sessions/${userEmail}?session_id=${sessionId}`
+          `${API_URL}/cleanup-sessions/${userEmail}?session_id=${sessionId}`
         );
       }
     } catch (err) {

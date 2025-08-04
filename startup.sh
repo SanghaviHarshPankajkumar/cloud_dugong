@@ -24,10 +24,10 @@ mv /tmp/nginx.conf /etc/nginx/conf.d/default.conf
 # Validate nginx configuration
 nginx -t
 
-# Start FastAPI backend in background
-echo "Starting FastAPI backend on port 8000..."
+# Start FastAPI backend in background (disable uvloop explicitly)
+echo "Starting FastAPI backend on port 8000 (without uvloop)..."
 cd /app/backend
-uvicorn main:app --host 0.0.0.0 --port 8000 &
+uvicorn main:app --host 0.0.0.0 --port 8000 --loop asyncio --http h11 &
 BACKEND_PID=$!
 
 # Wait a moment for backend to start

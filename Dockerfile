@@ -36,8 +36,6 @@ ENV PYTHONUNBUFFERED=1 \
     HOST=0.0.0.0 \
     PORT=8080
 
-# Application environment variables
-# Make sure to override MONGODB_URI with secrets in production
 ENV MONGODB_URI="mongodb+srv://harsh:harsh@practice.acsbh.mongodb.net/?retryWrites=true&w=majority&appName=practice" \
     BUCKET_NAME="dugongstorage"
 
@@ -45,7 +43,6 @@ WORKDIR /app
 
 # Copy backend code
 COPY backend/ /app/backend/
-COPY model/ /app/model/
 COPY key.json.b64 /app/key.json.b64
 
 # Install backend requirements
@@ -70,10 +67,6 @@ RUN mkdir -p /var/log/nginx /var/cache/nginx && \
 
 # Expose port for Cloud Run
 EXPOSE 8080
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:${PORT}/health || exit 1
 
 # Start everything via script
 CMD ["/app/startup.sh"]
