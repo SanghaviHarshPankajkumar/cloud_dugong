@@ -12,6 +12,28 @@ import os
 import cv2
 import tempfile
 
+from google.cloud import storage
+from google.oauth2 import service_account
+from tempfile import TemporaryDirectory
+from pathlib import Path
+from typing import List, Tuple
+import logging
+
+# Initialize your service account credentials and GCS client
+creds = service_account.Credentials.from_service_account_file("/content/dugongmonitoring.json")
+gcs_client = storage.Client(credentials=creds)
+logger = logging.getLogger(__name__)
+
+def download_gcs_image(gcs_url: str, download_dir: Path) -> Path:
+    # Example: https://storage.googleapis.com/dugongstorage/folder/image.jpg
+    bucket_name = "dugongstorage"
+    blob_path = gcs_url.replace("https://storage.googleapis.com/dugongstorage/", "")
+    blob = gcs_client.bucket(bucket_name).blob(blob_path)
+
+    local_path = download_dir / Path(blob_path).name
+    blob.download_to_filename(str(local_path))
+    return local_path
+
 logger = setup_logger("model_service", "logs/model_service.log")
 url = "https://storage.googleapis.com/dugong_models/best.pt"
 url = "https://storage.googleapis.com/dugong_models/classification_model.pt"
@@ -72,6 +94,7 @@ def fully_dynamic_nms(preds, iou_min=0.1, iou_max=0.6):
 
     return processed_results
 
+
 def run_model_on_images(
     image_paths: List[Path], session_id: str
 ) -> List[Tuple[int, int, str, bytes, str, str]]:
@@ -79,19 +102,30 @@ def run_model_on_images(
     Run dugong detection model on a batch of images and return detection results as bytes and label content.
     """
     results = []
-    logger.info(f"Running model on batch: {[str(p) for p in image_paths]}")
-    # 1. Perform prediction to get the initial results
-    batch_results = model.predict(
-        source=[str(p) for p in image_paths],
-        conf=0.3,
-        save=False,
-        show_labels=False,
-        show_conf=False,
-        project=None,
-        name=None,
-        iou=0.3,
-        max_det=1000
-    )
+    
+    with TemporaryDirectory() as tmpdir:
+        local_paths = []
+    
+        for path in image_paths:
+            if path.startswith("https://storage.googleapis.com/dugongstorage/"):
+                local_path = download_gcs_image(path, Path(tmpdir))
+            else:
+                local_path = Path(path)  # Already local
+            local_paths.append(str(local_path))
+    
+        # Now call the model
+        batch_results = model.predict(
+            source=local_paths,
+            conf=0.3,
+            save=False,
+            show_labels=False,
+            show_conf=False,
+            project=None,
+            name=None,
+            iou=0.3,
+            max_det=1000
+        )
+
 
     # 2. Apply the custom NMS function to the results
     processed_results = fully_dynamic_nms(batch_results)
